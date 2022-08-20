@@ -2,14 +2,18 @@ package com.example.FirstProject.controller;
 
 import com.example.FirstProject.Entity.Article;
 import com.example.FirstProject.dto.ArticleForm;
+import com.example.FirstProject.dto.CommentsDto;
 import com.example.FirstProject.repository.ArticleRepository;
+import com.example.FirstProject.service.CommentService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.sql.SQLOutput;
 import java.util.List;
@@ -18,6 +22,8 @@ import java.util.Optional;
 @Controller
 @Slf4j //로깅을 위한 어노테이션
 public class ArticleController {
+    @Autowired
+    private CommentService commentService;
     @Autowired// 스프링부트가 미리 생성해놓은 객체를 가져다가 자동 연결
    private ArticleRepository articleRepository;
 
@@ -50,8 +56,11 @@ log.info(form.toString());
         //1: id로 데이터를 가져옴!(repository로부터)
         Article articleEntity = articleRepository.findById(id).orElse(null);
 
+        List<CommentsDto>commentDtos = commentService.commentsMethod(id);
+
         //2: 가져온 데이터를 모델에 등록
         model.addAttribute("article",articleEntity);
+        model.addAttribute("commentDtos", commentDtos);
         //3: 보여줄 페이지를 설정
         return "articles/show";
     }
@@ -70,7 +79,7 @@ return "articles/index";//template 이름
     //**************************모든 아티클 모아보기**************************************************
 
     //****************************edit 페이지 **************************************************
-    @GetMapping("/articles/{idvalue}/edit")
+    @GetMapping("/articles/{idvalue}/edit")//url이름
     public String edit(@PathVariable  Long idvalue, Model model){// id 를 가져오는데 mapping url에서 가져온다는 어노테이션
 
         //수정할 데이터 가져오기
@@ -85,7 +94,7 @@ return "articles/index";//template 이름
 
     //****************************edit 페이지 수정 form 제출 시 db업데이트하고  **************************************
     //****************************수정폼반영된 아티클 상세페이지로 이동   ********************************************
-@PostMapping("/articles/update")
+@PostMapping("/articles/update")// edit.mustache에 where값(form버튼) 눌렸을때 이동하는 url에서 동작)
     public String update(ArticleForm form){
     log.info(form.toString());
 
@@ -103,7 +112,24 @@ Article target=   articleRepository.findById(articleEntity.getId()).orElse(null)
     //3: 수정 결과 페이지로 리다이렉트
 
         return "redirect:/articles/"+articleEntity.getId();
-    }
-}
-//****************************edit 페이지 수정 form 제출 시 db업데이트하고  **************************************
+    }//****************************edit 페이지 수정 form 제출 시 db업데이트하고  **************************************
 //****************************수정폼반영된 아티클 상세페이지로 이동   ******************************************
+
+    @GetMapping ("/articles/{id}/delete")// url로 이동할때 아래 기능들 동작
+public String delete(@PathVariable Long id, RedirectAttributes rttr){
+        log.info("Delete request");
+
+        //1.삭제 대상을 가져온다
+        Article target= articleRepository.findById(id).orElse(null);
+        log.info(target.toString());
+        //2.대상을 삭제한다
+        if(target!=null) {
+            articleRepository.delete(target);
+    rttr.addFlashAttribute("msg", "Deleted");
+        }
+
+        //3. 결과페이지로 리다이렉트
+        return "redirect:/articles/";
+
+}
+}

@@ -1,0 +1,69 @@
+<div class="card" id= "comments-new">
+    <div class= "card-body">
+<!--        댓글 작성 폼-->
+<form>
+<!--    nickname input-->
+    <div class="mb-3">
+        <label class="form-label">Nickname</label>
+        <input class="form-control form-control-sm" id="new-comment-nickname">
+    </div>
+
+<!--    댓글 본문 입력-->
+    <div class="mb-3">
+        <label class="form-label">Comments</label>
+        <textarea class="form-control form-control-sm" rows="3" id="new-comment-body"></textarea>
+    </div>
+
+<!--    hidden-input-->
+    {{#article}}
+        <input type="hidden" id="new-comment-article-id" value="{{id}}">
+        {{/article}}
+
+<!--    전송 버튼-->
+    <button type="button" class="btn btn-outline-primary btn-sm" id="comment-create-btn">Post Comment</button>
+</form>
+
+    </div>
+</div>
+
+<!--코멘트 db 저장 javascript-->
+<!--vscode에서 수정, 자바스크립트는 intellij 커뮤니티버전에서는 코드스니펫 동작 안함...-->
+<script>
+    {
+    const commentCreateBtn= document.querySelector("#comment-create-btn");
+
+//클릭시 코멘트 객체 생성
+    commentCreateBtn.addEventListener("click", function(){
+   const comments ={
+   nickname: document.querySelector("#new-comment-nickname").value,
+   body: document.querySelector("#new-comment-body").value,
+   article_id: document.querySelector("#new-comment-article-id").value
+   };
+
+//객체가 생성됬는지 확인
+   console.log(comments);
+
+   //fetch() -> talend API 요청을 JavaScript로 보내준다(REST API 호출)
+
+    const url = "/api/articles/"+comments.article_id+"/comments";
+    fetch(url, {
+    method: 'post',
+    body: JSON.stringify(comments),  //comment JS 객체를 Json으로 변경하여 보냄
+    headers:{
+    "Content-Type" : "application/json"
+    }
+    }).then(response =>{
+    //http응답 코드에 따른 메세지
+    const msg = (response.ok)? "reply posted" : "reply failed";
+    alert(msg);
+    //현재 페이지 새로고침
+    window.location.reload();
+    });
+
+
+    });
+
+
+   }
+
+    </script>
